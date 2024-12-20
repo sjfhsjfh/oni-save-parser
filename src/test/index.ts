@@ -17,6 +17,7 @@ import {
 } from "../save-structure";
 
 import minimist from "minimist";
+import { ParseInterceptor } from "../parser";
 
 const currentTagPath: string[] = [];
 
@@ -83,7 +84,7 @@ function checkDiff(original: SaveGame, modified: SaveGame) {
 function loadFile(fileName: string): SaveGame {
   const fileData = readFileSync(`./test-data/${fileName}.sav`);
 
-  let interceptors = [];
+  let interceptors: ParseInterceptor[] = [];
 
   if (showProgress) {
     interceptors.push(progressReporter(console.log.bind(console, "LOADING")));
@@ -109,7 +110,7 @@ function loadFile(fileName: string): SaveGame {
 }
 
 function saveFile(fileName: string, save: SaveGame) {
-  let interceptors = [];
+  let interceptors: ParseInterceptor[] = [];
 
   if (showProgress) {
     interceptors.push(progressReporter(console.log.bind(console, "SAVING")));

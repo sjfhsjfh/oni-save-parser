@@ -69,5 +69,5 @@ export function typed<T extends string>(s: T): T {
 }
 
 export function typedKeys<T>(x: T): (keyof T)[] {
-  return Object.keys(x) as any;
+  return Object.keys(x as any) as any;
 }

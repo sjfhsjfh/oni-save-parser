@@ -149,5 +149,5 @@ export declare enum SimHashes {
     Aluminum = 2108244480,
     MoltenCopper = 2128494380
 }
-export declare type SimHashName = keyof typeof SimHashes;
+export type SimHashName = keyof typeof SimHashes;
 export declare const SimHashNames: SimHashName[];
