@@ -39,9 +39,11 @@
     "typescript": "latest"
   },
   "dependencies": {
+    "@types/yargs": "^17.0.33",
     "jsonschema": "^1.2.4",
     "long": "^4.0.0",
     "pako": "^1.0.6",
-    "text-encoding": "^0.6.4"
+    "text-encoding": "^0.6.4",
+    "yargs": "^17.7.2"
   }
 }
