@@ -10,7 +10,7 @@ import {
   writeChars,
   writeInt32,
   readBytes,
-  writeBytes,
+  writeBytes
 } from "../parser";
 
 import { ParseContext, WriteContext } from "./parse-context";
@@ -21,11 +21,11 @@ import { parseHeader, unparseHeader } from "./header/parser";
 import { TypeTemplates } from "./type-templates";
 import {
   parseTemplates,
-  unparseTemplates,
+  unparseTemplates
 } from "./type-templates/template-parser";
 import {
   parseByTemplate,
-  unparseByTemplate,
+  unparseByTemplate
 } from "./type-templates/template-data-parser";
 
 import { SaveGameWorld } from "./world";
@@ -92,7 +92,7 @@ export function* parseSaveGame(
   const saveGame: SaveGame = {
     header,
     templates,
-    ...body,
+    ...body
   };
   return saveGame;
 }
@@ -114,7 +114,7 @@ function* parseSaveBody(context: ParseContext): ParseIterator<SaveGameBody> {
     throw new Error(
       `Failed to parse ksav header: Expected "${SAVE_HEADER}" but got "${ksav}" (${Array.from(
         ksav
-      ).map((x) => x.charCodeAt(0))})`
+      ).map(x => x.charCodeAt(0))})`
     );
   }
   const versionMajor: number = yield readInt32();
@@ -133,10 +133,10 @@ function* parseSaveBody(context: ParseContext): ParseIterator<SaveGameBody> {
     simData,
     version: {
       major: versionMajor,
-      minor: versionMinor,
+      minor: versionMinor
     },
     gameObjects,
-    gameData,
+    gameData
   };
   return body;
 }
@@ -148,7 +148,7 @@ function makeSaveParserContext(
   return {
     ...header,
     parseByTemplate: <T>(templateName: string) =>
-      parseByTemplate<T>(templates, templateName),
+      parseByTemplate<T>(templates, templateName)
   };
 }
 
@@ -193,6 +193,6 @@ function makeSaveWriterContext(
 ): WriteContext {
   return {
     ...header,
-    unparseByTemplate: unparseByTemplate.bind(null, templates),
+    unparseByTemplate: unparseByTemplate.bind(null, templates)
   };
 }
