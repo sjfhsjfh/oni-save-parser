@@ -18,7 +18,38 @@ import { ParseInterceptor } from "../parser";
 import { VersionStrictness } from "../save-structure/version-validator";
 import yargs from "yargs";
 
-export function test(argv: yargs.ArgumentsCamelCase) {
+export function mount(y: yargs.Argv) {
+  return y.command(
+    "test <file> [options]",
+    "Legacy test",
+    yargs => {
+      yargs
+        .option("progress", {
+          type: "boolean",
+          default: false,
+          description: "Show progress"
+        })
+        .option("progress-tags", {
+          type: "boolean",
+          default: false,
+          description: "Show progress tags"
+        })
+        .option("version-strictness", {
+          type: "string",
+          alias: "s",
+          default: "minor",
+          description: "Version strictness, must be 'none', 'major', or 'minor'"
+        })
+        .positional("file", {
+          describe: "File name",
+          type: "string"
+        });
+    },
+    test
+  );
+}
+
+function test(argv: yargs.ArgumentsCamelCase) {
   const showProgress = argv.progress as boolean;
   const showTags = argv["progress-tags"] as boolean;
   const fileName = argv.file as string;
