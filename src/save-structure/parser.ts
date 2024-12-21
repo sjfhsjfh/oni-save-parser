@@ -40,7 +40,7 @@ import { parseGameObjects, unparseGameObjects } from "./game-objects/parser";
 import { SaveGameData } from "./game-data";
 import { parseGameData, writeGameData } from "./game-data/parser";
 import { SaveGame } from "./save-game";
-import { validateVersion } from "./version-validator";
+import { CURRENT_VERSION, Version } from "./version";
 
 const SAVE_HEADER = "KSAV";
 
@@ -74,7 +74,10 @@ export function* parseSaveGame(
   const { saveMajorVersion, saveMinorVersion } = header.gameInfo;
   const versionStrictness = options.versionStrictness || "minor";
   if (versionStrictness !== "none") {
-    validateVersion(saveMajorVersion, saveMinorVersion, versionStrictness);
+    CURRENT_VERSION.validate(
+      new Version(saveMajorVersion, saveMinorVersion),
+      versionStrictness
+    );
   }
 
   const templates: TypeTemplates = yield* parseTemplates();

@@ -20,7 +20,7 @@ export { tagReporter } from "./tagger";
 export {
   E_VERSION_MAJOR,
   E_VERSION_MINOR,
-} from "./save-structure/version-validator";
+} from "./save-structure/version";
 
 export interface ParseOptions extends SaveGameParserOptions {
   interceptor?: ParseInterceptor;

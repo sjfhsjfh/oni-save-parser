@@ -15,7 +15,7 @@ import {
   getBehavior
 } from "../save-structure";
 import { ParseInterceptor } from "../parser";
-import { VersionStrictness } from "../save-structure/version-validator";
+import { VersionStrictness } from "../save-structure/version";
 import yargs from "yargs";
 
 export function mount(y: yargs.Argv) {
