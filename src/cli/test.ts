@@ -1,3 +1,9 @@
+/**
+ * @module test
+ *
+ * Original Test function by @RoboPhred
+ */
+
 import { readFileSync, writeFileSync } from "fs";
 import compose from "lodash.flowright";
 import { diff } from "deep-diff";
