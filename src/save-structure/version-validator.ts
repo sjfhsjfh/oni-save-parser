@@ -1,11 +1,16 @@
 export const CURRENT_VERSION_MAJOR = 7;
 export const CURRENT_VERSION_MINOR = [31];
 
+export type VersionStrictness = "none" | "major" | "minor";
+
 export function validateVersion(
   major: number,
   minor: number,
-  strictness: "major" | "minor" = "minor"
+  strictness: VersionStrictness = "minor"
 ) {
+  if (strictness === "none") {
+    return;
+  }
   if (
     !matchVersion(major, CURRENT_VERSION_MAJOR) ||
     (strictness == "minor" && !matchVersion(minor, CURRENT_VERSION_MINOR))
