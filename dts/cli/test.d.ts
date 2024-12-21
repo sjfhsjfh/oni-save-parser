@@ -1,1 +1,2 @@
-export declare function test(fileName: string, showProgress: boolean, showTags: boolean): void;
+import yargs from "yargs";
+export declare function test(argv: yargs.ArgumentsCamelCase): void;

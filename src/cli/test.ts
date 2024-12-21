@@ -15,12 +15,15 @@ import {
   getBehavior
 } from "../save-structure";
 import { ParseInterceptor } from "../parser";
+import { VersionStrictness } from "../save-structure/version-validator";
+import yargs from "yargs";
 
-export function test(
-  fileName: string,
-  showProgress: boolean,
-  showTags: boolean
-) {
+export function test(argv: yargs.ArgumentsCamelCase) {
+  const showProgress = argv.progress as boolean;
+  const showTags = argv["progress-tags"] as boolean;
+  const fileName = argv.file as string;
+  const versionStrictness = argv["version-strictness"] as VersionStrictness;
+
   const currentTagPath: string[] = [];
   console.log("Loading save");
   const saveData = loadFile(fileName);
@@ -93,7 +96,10 @@ export function test(
     const interceptor = (compose as any)((x: any) => x, ...interceptors);
 
     try {
-      return parseSaveGame(fileData.buffer, interceptor);
+      return parseSaveGame(fileData.buffer, {
+        interceptor,
+        versionStrictness
+      });
     } catch (e) {
       console.error(`Load error at ${currentTagPath.join(" => ")}`);
       e.tagPath = [...currentTagPath];
