@@ -1,18 +1,24 @@
 import { DataReader, ZlibDataReader } from "../../binary-serializer";
 
 import {
+  BasicReadInstruction,
+  InstOf,
   isReadInstruction,
-  ReadDataTypes,
-  ReadInstruction,
+  PrimaryInstruction,
+  PrimaryNameReturn,
+  PrimaryTName,
+  ReadCompressedInstruction,
 } from "./read-instructions";
 import { ParseError } from "../errors";
-import { isMetaInstruction } from "../types";
+import { ParserInstruction } from "../types";
 
 // Typescript currently does not support specifying the return value of an iterator.
 //  We could use IterableIterator<ReadInstructions | T>, but that throws errors
 //  when the parser delegates to sub-generators.
-export type ParseIterator<T> = Generator<any, T, any>;
-export type ParseInterceptor = (value: any) => any;
+export type ParseIterator<T> = Generator<ParserInstruction, T, any>;
+export type ParseInterceptor = (
+  instruction: ParserInstruction
+) => ParserInstruction;
 
 export function parse<T>(
   reader: DataReader,
@@ -21,85 +27,105 @@ export function parse<T>(
 ): T {
   let nextValue: any = undefined;
   while (true) {
-    let iteratorResult: IteratorResult<any>;
+    let iteratorResult: IteratorResult<ParserInstruction, T>;
     try {
       iteratorResult = readParser.next(nextValue);
     } catch (e) {
       throw ParseError.create(e, reader.position);
     }
 
-    let { value, done } = iteratorResult;
+    if (iteratorResult.done) return iteratorResult.value;
+
+    let value = iteratorResult.value;
+
     value = interceptor ? interceptor(value) : value;
 
-    if (!isMetaInstruction(value)) {
-      if (isReadInstruction(value)) {
-        try {
-          nextValue = executeReadInstruction(reader, value, interceptor);
-        } catch (e) {
-          const err = ParseError.create(e, reader.position);
-          throw err;
-        }
-      } else if (!done) {
-        throw new Error("Cannot yield a non-parse-instruction.");
-      } else {
-        nextValue = value;
-      }
-    }
+    if (value.isMeta) continue;
 
-    if (done) {
-      break;
+    if (!(value instanceof BasicReadInstruction)) {
+      throw new Error("Cannot yield a non-parse-instruction.");
+    }
+    try {
+      if (
+        !(
+          value.dataType in primaryReadParsers ||
+          value.dataType === "compressed"
+        )
+      ) {
+        throw new Error(`Unknown read instruction dataType: ${value.dataType}`);
+      }
+      nextValue = executeReadInstruction(reader, value, interceptor);
+    } catch (e) {
+      const err = ParseError.create(e, reader.position);
+      throw err;
     }
   }
-
-  return nextValue;
 }
 
-type TypedReadInstruction<T extends ReadDataTypes> = Extract<
-  ReadInstruction,
-  { dataType: T }
->;
-
-type ReadParser<T extends ReadDataTypes> = (
+type PrimaryParser<TName extends PrimaryTName> = (
   reader: DataReader,
-  inst: TypedReadInstruction<T>,
+  inst: PrimaryInstruction[TName],
   interceptor?: ParseInterceptor
-) => any;
-type ReadParsers = { [P in ReadDataTypes]: ReadParser<P> };
+) => PrimaryNameReturn[TName];
+type PrimaryParsers = { [P in PrimaryTName]: PrimaryParser<P> };
 
-const readParsers: ReadParsers = {
-  byte: (r) => r.readByte(),
-  "signed-byte": (r) => r.readSByte(),
+const primaryReadParsers: PrimaryParsers = {
+  byte: (r, _) => r.readByte(),
+  "signed-byte": (r, _) => r.readSByte(),
   "byte-array": (r, i) =>
     i.length == null ? r.readAllBytes() : r.readBytes(i.length),
-  "uint-16": (r) => r.readUInt16(),
-  "int-16": (r) => r.readInt16(),
-  "uint-32": (r) => r.readUInt32(),
-  "int-32": (r) => r.readInt32(),
-  "uint-64": (r) => r.readUInt64(),
-  "int-64": (r) => r.readInt64(),
-  single: (r) => r.readSingle(),
-  double: (r) => r.readDouble(),
+  "uint-16": (r, _) => r.readUInt16(),
+  "int-16": (r, _) => r.readInt16(),
+  "uint-32": (r, _) => r.readUInt32(),
+  "int-32": (r, _) => r.readInt32(),
+  "uint-64": (r, _) => r.readUInt64(),
+  "int-64": (r, _) => r.readInt64(),
+  single: (r, _) => r.readSingle(),
+  double: (r, _) => r.readDouble(),
   chars: (r, i) => r.readChars(i.length),
-  "klei-string": (r) => r.readKleiString(),
+  "klei-string": (r, _) => r.readKleiString(),
   "skip-bytes": (r, i) => r.skipBytes(i.length),
-  compressed: (r, i, interceptor) => {
-    const bytes = r.readAllBytes();
-    const reader = new ZlibDataReader(new Uint8Array(bytes));
-    const result = parse(reader, i.parser, interceptor);
-    return result;
-  },
-  "reader-position": (r) => r.position,
+  "reader-position": (r, _) => r.position
 };
 
-function executeReadInstruction<T extends ReadDataTypes>(
+function parseCompressed<TReturn>(
   reader: DataReader,
-  inst: TypedReadInstruction<T>,
+  inst: ReadCompressedInstruction<TReturn>,
   interceptor?: ParseInterceptor
-): any {
+): TReturn {
+  const bytes = reader.readAllBytes();
+  const new_reader = new ZlibDataReader(new Uint8Array(bytes));
+  return parse(new_reader, inst.parser, interceptor);
+}
+
+function executeReadInstruction<TReturn>(
+  reader: DataReader,
+  inst: InstOf<TReturn>,
+  interceptor?: ParseInterceptor
+): TReturn {
   if (inst.type !== "read") {
+    // TODO: remove, unreachable code
     throw new Error("Expected a read parse instruction.");
   }
 
-  const readFunc = (readParsers[inst.dataType] as any) as ReadParser<T>;
-  return readFunc(reader, inst, interceptor);
+  if (!isReadInstruction(inst)) {
+    throw new Error("Expected a read instruction.");
+  }
+
+  function compressed<TReturn>(
+    inst: any
+  ): inst is ReadCompressedInstruction<TReturn> {
+    return inst instanceof ReadCompressedInstruction;
+  }
+
+  if (compressed<TReturn>(inst)) {
+    return parseCompressed(reader, inst, interceptor);
+  }
+
+  // Here `TReturn` must be extends `PrimaryReturn`
+  return (primaryReadParsers[inst.dataType] as any)(
+    reader,
+    inst,
+    interceptor
+  ) as TReturn;
 }

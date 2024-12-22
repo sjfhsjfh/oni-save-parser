@@ -1,9 +1,16 @@
 import { ParserInstruction } from "../parser/types";
-export interface TaggedParseInstruction extends ParserInstruction {
-    type: "tagged-parse:start" | "tagged-parse:end";
-    isMeta: true;
+type TaggedParseStart = "tagged-parse:start";
+type TaggedParseEnd = "tagged-parse:end";
+type TaggedParseType = TaggedParseStart | TaggedParseEnd;
+export declare class TaggedParseInstruction implements ParserInstruction {
+    type: TaggedParseType;
     tag: string;
-    instanceName?: string;
+    instanceName?: string | undefined;
+    isMeta: true;
+    constructor(type: TaggedParseType, tag: string, instanceName?: string | undefined);
+    static start(tag: string, instanceName?: string): TaggedParseInstruction;
+    static end(tag: string, instanceName?: string): TaggedParseInstruction;
+    isStart(): boolean;
+    isEnd(): boolean;
 }
-export declare function taggedParseStart(tag: string, instanceName?: string): TaggedParseInstruction;
-export declare function taggedParseEnd(tag: string, instanceName?: string): TaggedParseInstruction;
+export {};

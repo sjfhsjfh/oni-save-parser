@@ -1,10 +1,10 @@
 import {
   ParseIterator,
   UnparseIterator,
-  readInt32,
-  readByte,
   writeInt32,
-  writeByte
+  writeByte,
+  ReadByteInstruction,
+  ReadInt32Instruction
 } from "../../../parser";
 
 import {
@@ -33,9 +33,9 @@ export function* parseGameObject(
   const position = yield* parseVector3();
   const rotation = yield* parseQuaternion();
   const scale = yield* parseVector3();
-  const folder = yield readByte();
+  const folder = yield new ReadByteInstruction();
 
-  const behaviorCount = yield readInt32();
+  const behaviorCount = yield new ReadInt32Instruction();
 
   const behaviors: GameObjectBehavior[] = new Array(behaviorCount);
   for (let i = 0; i < behaviorCount; i++) {

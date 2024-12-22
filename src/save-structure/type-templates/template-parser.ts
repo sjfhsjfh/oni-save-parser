@@ -1,9 +1,9 @@
 import {
   ParseIterator,
+  ReadInt32Instruction,
+  ReadKleiStringInstruction,
   UnparseIterator,
-  readInt32,
   writeInt32,
-  readKleiString,
   writeKleiString
 } from "../../parser";
 
@@ -18,7 +18,7 @@ import { validateDotNetIdentifierName } from "../../utils";
 import { parseTypeInfo, unparseTypeInfo } from "./type-info-parser";
 
 export function* parseTemplates(): ParseIterator<TypeTemplates> {
-  const templateCount = yield readInt32();
+  const templateCount = yield new ReadInt32Instruction();
   const templates: TypeTemplates = new Array(templateCount);
   for (let i = 0; i < templateCount; i++) {
     const template = yield* parseTemplate();
@@ -35,14 +35,18 @@ export function* unparseTemplates(templates: TypeTemplates): UnparseIterator {
 }
 
 function* parseTemplate(): ParseIterator<TypeTemplate> {
-  const name = validateDotNetIdentifierName(yield readKleiString());
+  const name = validateDotNetIdentifierName(
+    yield new ReadKleiStringInstruction()
+  );
 
-  const fieldCount = yield readInt32();
-  const propCount = yield readInt32();
+  const fieldCount = yield new ReadInt32Instruction();
+  const propCount = yield new ReadInt32Instruction();
 
   const fields: TypeTemplateMember[] = new Array(fieldCount);
   for (let i = 0; i < fieldCount; i++) {
-    const name = validateDotNetIdentifierName(yield readKleiString());
+    const name = validateDotNetIdentifierName(
+      yield new ReadKleiStringInstruction()
+    );
     const type = yield* parseTypeInfo();
     fields[i] = {
       name,
@@ -52,7 +56,9 @@ function* parseTemplate(): ParseIterator<TypeTemplate> {
 
   const properties: TypeTemplateMember[] = new Array(propCount);
   for (let i = 0; i < propCount; i++) {
-    const name = validateDotNetIdentifierName(yield readKleiString());
+    const name = validateDotNetIdentifierName(
+      yield new ReadKleiStringInstruction()
+    );
     const type = yield* parseTypeInfo();
     properties[i] = {
       name,

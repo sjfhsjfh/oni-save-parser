@@ -2,14 +2,14 @@ import { validateDotNetIdentifierName } from "../../../../../utils";
 
 import {
   ParseIterator,
-  readInt32,
   UnparseIterator,
-  readKleiString,
-  getReaderPosition,
   writeInt32,
   writeKleiString,
   writeDataLengthBegin,
-  writeDataLengthEnd
+  writeDataLengthEnd,
+  GetReaderPosition,
+  ReadInt32Instruction,
+  ReadKleiStringInstruction
 } from "../../../../../parser";
 
 import {
@@ -63,7 +63,7 @@ function* parseModifiers<T extends ModificationInstance>(
   modifierInstanceType: string,
   templateParser: TemplateParser
 ): ParseIterator<T[]> {
-  const count = yield readInt32();
+  const count = yield new ReadInt32Instruction();
   const items = new Array(count);
   for (let i = 0; i < count; i++) {
     const modifier = yield* parseModifier<T>(
@@ -90,13 +90,13 @@ function* parseModifier<T extends ModificationInstance>(
   modifierInstanceType: string,
   templateParser: TemplateParser
 ): ParseIterator<T> {
-  const name = yield readKleiString();
+  const name = yield new ReadKleiStringInstruction();
   validateDotNetIdentifierName(name);
-  const dataLength = yield readInt32();
+  const dataLength = yield new ReadInt32Instruction();
 
-  const startPos = yield getReaderPosition();
+  const startPos = yield new GetReaderPosition();
   const value = yield* templateParser.parseByTemplate(modifierInstanceType);
-  const endPos = yield getReaderPosition();
+  const endPos = yield new GetReaderPosition();
 
   const dataRemaining = dataLength - (endPos - startPos);
   if (dataRemaining !== 0) {

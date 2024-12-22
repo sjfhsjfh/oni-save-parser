@@ -1,6 +1,7 @@
 import { ParserInstruction } from "../parser/types";
-export interface ProgressInstruction extends ParserInstruction {
+export declare class ProgressInstruction implements ParserInstruction {
+    message: string;
     type: "progress";
     isMeta: true;
-    message: string;
+    constructor(message: string);
 }

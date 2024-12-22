@@ -4,8 +4,8 @@ import {
 } from "../type-templates/template-data-parser";
 import {
   ParseIterator,
+  ReadKleiStringInstruction,
   UnparseIterator,
-  readKleiString,
   writeKleiString
 } from "../../parser";
 
@@ -18,7 +18,7 @@ const AssemblyTypeName = "Klei.SaveFileRoot";
 export function* parseWorld({
   parseByTemplate
 }: TemplateParser): ParseIterator<SaveGameWorld> {
-  const typeName = yield readKleiString();
+  const typeName = yield new ReadKleiStringInstruction();
   validateDotNetIdentifierName(typeName);
   if (typeName !== AssemblyTypeName) {
     throw new Error(

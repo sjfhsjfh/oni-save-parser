@@ -1,178 +1,142 @@
+import { LongNum } from "../../binary-serializer/types";
+import { ParserInstruction } from "../types";
 import { ParseIterator } from "./parser";
 
-export interface BasicReadInstruction {
-  type: "read";
-  dataType: string;
+export type PrimaryNameReturn = {
+  byte: number;
+  "signed-byte": number;
+  "byte-array": ArrayBuffer;
+  "uint-16": number;
+  "int-16": number;
+  "uint-32": number;
+  "int-32": number;
+  "uint-64": LongNum;
+  "int-64": LongNum;
+  single: number;
+  double: number;
+  chars: string;
+  "klei-string": string | null;
+  "skip-bytes": void;
+  "reader-position": number;
+};
+export type PrimaryTName = keyof PrimaryNameReturn & string;
+
+export type PrimaryInstruction = {
+  byte: ReadByteInstruction;
+  "signed-byte": ReadSByteInstruction;
+  "byte-array": ReadBytesInstruction;
+  "uint-16": ReadUInt16Instruction;
+  "int-16": ReadInt16Instruction;
+  "uint-32": ReadUInt32Instruction;
+  "int-32": ReadInt32Instruction;
+  "uint-64": ReadUInt64Instruction;
+  "int-64": ReadInt64Instruction;
+  single: ReadSingleInstruction;
+  double: ReadDoubleInstruction;
+  chars: ReadCharsInstruction;
+  "klei-string": ReadKleiStringInstruction;
+  "skip-bytes": SkipBytesInstruction;
+  "reader-position": GetReaderPosition;
+};
+
+export type TNameOf<TReturn> = {
+  [TName in PrimaryTName]: PrimaryNameReturn[TName] extends TReturn
+    ? TName
+    : never
+}[PrimaryTName];
+
+export type InstOf<TReturn> = TReturn extends PrimaryReturn
+  ? PrimaryInstruction[TNameOf<TReturn>]
+  : ReadCompressedInstruction<TReturn>;
+
+export type PrimaryReturn = PrimaryNameReturn[PrimaryTName];
+
+export abstract class BasicReadInstruction<
+  TName extends string
+> extends ParserInstruction {
+  public type: "read" = "read";
+  public isMeta: false = false;
+  abstract dataType: TName;
 }
 
-export interface ReadByteInstruction extends BasicReadInstruction {
-  dataType: "byte";
-}
-export function readByte(): ReadByteInstruction {
-  return {
-    type: "read",
-    dataType: "byte"
-  };
+export class ReadByteInstruction extends BasicReadInstruction<"byte"> {
+  public dataType: "byte" = "byte";
 }
 
-export interface ReadSByteInstruction extends BasicReadInstruction {
-  dataType: "signed-byte";
-}
-export function readSByte(): ReadSByteInstruction {
-  return {
-    type: "read",
-    dataType: "signed-byte"
-  };
+export class ReadSByteInstruction extends BasicReadInstruction<"signed-byte"> {
+  public dataType: "signed-byte" = "signed-byte";
 }
 
-export interface ReadBytesInstruction extends BasicReadInstruction {
-  dataType: "byte-array";
-  length?: number;
-}
-export function readBytes(length?: number): ReadBytesInstruction {
-  return {
-    type: "read",
-    dataType: "byte-array",
-    length
-  };
+export class ReadBytesInstruction extends BasicReadInstruction<"byte-array"> {
+  public dataType: "byte-array" = "byte-array";
+  constructor(public length?: number) {
+    super();
+  }
 }
 
-export interface ReadUInt16Instruction extends BasicReadInstruction {
-  dataType: "uint-16";
-}
-export function readUInt16(): ReadUInt16Instruction {
-  return {
-    type: "read",
-    dataType: "uint-16"
-  };
+export class ReadUInt16Instruction extends BasicReadInstruction<"uint-16"> {
+  public dataType: "uint-16" = "uint-16";
 }
 
-export interface ReadInt16Instruction extends BasicReadInstruction {
-  dataType: "int-16";
-}
-export function readInt16(): ReadInt16Instruction {
-  return {
-    type: "read",
-    dataType: "int-16"
-  };
+export class ReadInt16Instruction extends BasicReadInstruction<"int-16"> {
+  public dataType: "int-16" = "int-16";
 }
 
-export interface ReadUInt32Instruction extends BasicReadInstruction {
-  dataType: "uint-32";
-}
-export function readUInt32(): ReadUInt32Instruction {
-  return {
-    type: "read",
-    dataType: "uint-32"
-  };
+export class ReadUInt32Instruction extends BasicReadInstruction<"uint-32"> {
+  public dataType: "uint-32" = "uint-32";
 }
 
-export interface ReadInt32Instruction extends BasicReadInstruction {
-  dataType: "int-32";
-}
-export function readInt32(): ReadInt32Instruction {
-  return {
-    type: "read",
-    dataType: "int-32"
-  };
+export class ReadInt32Instruction extends BasicReadInstruction<"int-32"> {
+  public dataType: "int-32" = "int-32";
 }
 
-export interface ReadUInt64Instruction extends BasicReadInstruction {
-  dataType: "uint-64";
-}
-export function readUInt64(): ReadUInt64Instruction {
-  return {
-    type: "read",
-    dataType: "uint-64"
-  };
+export class ReadUInt64Instruction extends BasicReadInstruction<"uint-64"> {
+  public dataType: "uint-64" = "uint-64";
 }
 
-export interface ReadInt64Instruction extends BasicReadInstruction {
-  dataType: "int-64";
-}
-export function readInt64(): ReadInt64Instruction {
-  return {
-    type: "read",
-    dataType: "int-64"
-  };
+export class ReadInt64Instruction extends BasicReadInstruction<"int-64"> {
+  public dataType: "int-64" = "int-64";
 }
 
-export interface ReadSingleInstruction extends BasicReadInstruction {
-  dataType: "single";
-}
-export function readSingle(): ReadSingleInstruction {
-  return {
-    type: "read",
-    dataType: "single"
-  };
+export class ReadSingleInstruction extends BasicReadInstruction<"single"> {
+  public dataType: "single" = "single";
 }
 
-export interface ReadDoubleInstruction extends BasicReadInstruction {
-  dataType: "double";
-}
-export function readDouble(): ReadDoubleInstruction {
-  return {
-    type: "read",
-    dataType: "double"
-  };
+export class ReadDoubleInstruction extends BasicReadInstruction<"double"> {
+  public dataType: "double" = "double";
 }
 
-export interface ReadCharsInstruction extends BasicReadInstruction {
-  dataType: "chars";
-  length: number;
-}
-export function readChars(length: number): ReadCharsInstruction {
-  return {
-    type: "read",
-    dataType: "chars",
-    length
-  };
+export class ReadCharsInstruction extends BasicReadInstruction<"chars"> {
+  public dataType: "chars" = "chars";
+  constructor(public length: number) {
+    super();
+  }
 }
 
-export interface ReadKleiStringInstruction extends BasicReadInstruction {
-  dataType: "klei-string";
-}
-export function readKleiString(): ReadKleiStringInstruction {
-  return {
-    type: "read",
-    dataType: "klei-string"
-  };
+export class ReadKleiStringInstruction extends BasicReadInstruction<
+  "klei-string"
+> {
+  public dataType: "klei-string" = "klei-string";
 }
 
-export interface SkipBytesInstruction extends BasicReadInstruction {
-  dataType: "skip-bytes";
-  length: number;
-}
-export function skipBytes(length: number): SkipBytesInstruction {
-  return {
-    type: "read",
-    dataType: "skip-bytes",
-    length
-  };
+export class SkipBytesInstruction extends BasicReadInstruction<"skip-bytes"> {
+  public dataType: "skip-bytes" = "skip-bytes";
+  constructor(public length: number) {
+    super();
+  }
 }
 
-export interface ReadCompressedInstruction extends BasicReadInstruction {
-  dataType: "compressed";
-  parser: ParseIterator<any>;
-}
-export function readCompressed(
-  parser: ParseIterator<any>
-): ReadCompressedInstruction {
-  return {
-    type: "read",
-    dataType: "compressed",
-    parser
-  };
+export class ReadCompressedInstruction<TInner> extends BasicReadInstruction<
+  "compressed"
+> {
+  public dataType: "compressed" = "compressed";
+  constructor(public parser: ParseIterator<TInner>) {
+    super();
+  }
 }
 
-export interface GetReaderPosition extends BasicReadInstruction {
-  dataType: "reader-position";
-}
-export function getReaderPosition(): GetReaderPosition {
-  return {
-    type: "read",
-    dataType: "reader-position"
-  };
+export class GetReaderPosition extends BasicReadInstruction<"reader-position"> {
+  public dataType: "reader-position" = "reader-position";
 }
 
 export type ReadInstruction =
@@ -190,12 +154,26 @@ export type ReadInstruction =
   | ReadCharsInstruction
   | ReadKleiStringInstruction
   | SkipBytesInstruction
-  | ReadCompressedInstruction
+  | ReadCompressedInstruction<any>
   | GetReaderPosition;
 
-export type ReadDataTypes = ReadInstruction["dataType"];
-
 export function isReadInstruction(value: any): value is ReadInstruction {
-  // TODO: Use a symbol or something to ensure this is a real parse instruction.
-  return value && value.type === "read";
+  return (
+    value instanceof ReadByteInstruction ||
+    value instanceof ReadSByteInstruction ||
+    value instanceof ReadBytesInstruction ||
+    value instanceof ReadUInt16Instruction ||
+    value instanceof ReadInt16Instruction ||
+    value instanceof ReadUInt32Instruction ||
+    value instanceof ReadInt32Instruction ||
+    value instanceof ReadUInt64Instruction ||
+    value instanceof ReadInt64Instruction ||
+    value instanceof ReadSingleInstruction ||
+    value instanceof ReadDoubleInstruction ||
+    value instanceof ReadCharsInstruction ||
+    value instanceof ReadKleiStringInstruction ||
+    value instanceof SkipBytesInstruction ||
+    value instanceof ReadCompressedInstruction ||
+    value instanceof GetReaderPosition
+  );
 }

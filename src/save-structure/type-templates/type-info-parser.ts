@@ -9,14 +9,14 @@ import {
 import {
   ParseIterator,
   UnparseIterator,
-  readKleiString,
-  readByte,
   writeKleiString,
-  writeByte
+  writeByte,
+  ReadByteInstruction,
+  ReadKleiStringInstruction
 } from "../../parser";
 
 export function* parseTypeInfo(): ParseIterator<TypeInfo> {
-  const info: SerializationTypeInfo = yield readByte();
+  const info: SerializationTypeInfo = yield new ReadByteInstruction();
   const type = getTypeCode(info);
 
   let templateName: string | undefined;
@@ -26,7 +26,7 @@ export function* parseTypeInfo(): ParseIterator<TypeInfo> {
     type === SerializationTypeCode.UserDefined ||
     type === SerializationTypeCode.Enumeration
   ) {
-    const userTypeName = yield readKleiString();
+    const userTypeName = yield new ReadKleiStringInstruction();
     if (userTypeName == null) {
       throw new Error(
         "Expected non-null type name for user-defined or enumeration type."
@@ -41,7 +41,7 @@ export function* parseTypeInfo(): ParseIterator<TypeInfo> {
         `Unsupported non-generic type ${type} marked as generic.`
       );
     }
-    const subTypeCount: number = yield readByte();
+    const subTypeCount: number = yield new ReadByteInstruction();
     subTypes = new Array(subTypeCount);
     for (let i = 0; i < subTypeCount; i++) {
       subTypes[i] = yield* parseTypeInfo();

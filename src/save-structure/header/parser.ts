@@ -4,22 +4,23 @@ import { validate } from "jsonschema";
 
 import {
   ParseIterator,
-  readUInt32,
-  readBytes,
   writeUInt32,
   writeBytes,
-  UnparseIterator
+  UnparseIterator,
+  ReadUInt32Instruction,
+  ReadBytesInstruction
 } from "../../parser";
 
 import { SaveGameHeader, headerSchema } from "./header";
 
 export function* parseHeader(): ParseIterator<SaveGameHeader> {
-  const buildVersion = yield readUInt32();
-  const headerSize = yield readUInt32();
-  const headerVersion = yield readUInt32();
-  const isCompressed = headerVersion >= 1 ? Boolean(yield readUInt32()) : false;
+  const buildVersion = yield new ReadUInt32Instruction();
+  const headerSize = yield new ReadUInt32Instruction();
+  const headerVersion = yield new ReadUInt32Instruction();
+  const isCompressed =
+    headerVersion >= 1 ? Boolean(yield new ReadUInt32Instruction()) : false;
 
-  const infoBytes = yield readBytes(headerSize);
+  const infoBytes = yield new ReadBytesInstruction(headerSize);
   const infoStr = new TextDecoder("utf-8").decode(infoBytes);
   const gameInfo = JSON.parse(infoStr);
 

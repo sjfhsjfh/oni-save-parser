@@ -1,7 +1,7 @@
 import {
   ParseIterator,
+  ReadInt32Instruction,
   UnparseIterator,
-  readInt32,
   writeInt32
 } from "../../parser";
 
@@ -19,7 +19,7 @@ import {
 export function* parseGameObjects(
   templateParser: TemplateParser
 ): ParseIterator<GameObjectGroup[]> {
-  const count = yield readInt32();
+  const count = yield new ReadInt32Instruction();
   const groups: GameObjectGroup[] = new Array(count);
   for (let i = 0; i < count; i++) {
     groups[i] = yield* parseGameObjectGroup(templateParser);

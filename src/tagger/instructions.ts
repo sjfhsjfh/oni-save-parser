@@ -1,32 +1,36 @@
 import { ParserInstruction } from "../parser/types";
 
-export interface TaggedParseInstruction extends ParserInstruction {
-  type: "tagged-parse:start" | "tagged-parse:end";
-  isMeta: true;
-  tag: string;
-  instanceName?: string;
-}
+type TaggedParseStart = "tagged-parse:start";
+type TaggedParseEnd = "tagged-parse:end";
+type TaggedParseType = TaggedParseStart | TaggedParseEnd;
 
-export function taggedParseStart(
-  tag: string,
-  instanceName?: string
-): TaggedParseInstruction {
-  return {
-    type: "tagged-parse:start",
-    isMeta: true,
-    tag,
-    instanceName
-  };
-}
+export class TaggedParseInstruction implements ParserInstruction {
+  public isMeta: true = true;
+  constructor(
+    public type: TaggedParseType,
+    public tag: string,
+    public instanceName?: string
+  ) {}
 
-export function taggedParseEnd(
-  tag: string,
-  instanceName?: string
-): TaggedParseInstruction {
-  return {
-    type: "tagged-parse:end",
-    isMeta: true,
-    tag,
-    instanceName
-  };
+  public static start(
+    tag: string,
+    instanceName?: string
+  ): TaggedParseInstruction {
+    return new TaggedParseInstruction("tagged-parse:start", tag, instanceName);
+  }
+
+  public static end(
+    tag: string,
+    instanceName?: string
+  ): TaggedParseInstruction {
+    return new TaggedParseInstruction("tagged-parse:end", tag, instanceName);
+  }
+
+  public isStart(): boolean {
+    return this.type === "tagged-parse:start";
+  }
+
+  public isEnd(): boolean {
+    return this.type === "tagged-parse:end";
+  }
 }

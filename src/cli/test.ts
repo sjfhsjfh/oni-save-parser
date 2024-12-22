@@ -147,7 +147,8 @@ function test(argv: yargs.ArgumentsCamelCase) {
 
     interceptors.push(tagReporter(onTagStart, onTagEnd));
 
-    const interceptor = (compose as any)((x: any) => x, ...interceptors);
+    // const interceptor = compose((x: any) => x, ...interceptors);
+    const interceptor = interceptors.reduce((a, b) => ((x: any) => b(a(x))), (x: any) => x);
 
     try {
       const fileData = writeSaveGame(save, interceptor);

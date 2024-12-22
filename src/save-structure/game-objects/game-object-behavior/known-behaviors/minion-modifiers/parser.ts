@@ -2,26 +2,26 @@ import { validateDotNetIdentifierName } from "../../../../../utils";
 
 import {
   ParseIterator,
-  readInt32,
   UnparseIterator,
-  readKleiString,
-  getReaderPosition,
   writeInt32,
   writeKleiString,
   writeDataLengthBegin,
   writeDataLengthEnd,
+  ReadInt32Instruction,
+  ReadKleiStringInstruction,
+  GetReaderPosition
 } from "../../../../../parser";
 
 import {
   TemplateParser,
-  TemplateUnparser,
+  TemplateUnparser
 } from "../../../../type-templates/template-data-parser";
 
 import {
   MinionModifiersExtraData,
   AIAmountInstance,
   AISicknessInstance,
-  MinionModificationInstance,
+  MinionModificationInstance
 } from "./minion-modifiers";
 
 export function* parseMinionModifiersExtraData(
@@ -37,7 +37,7 @@ export function* parseMinionModifiersExtraData(
 
   const extraData: MinionModifiersExtraData = {
     amounts,
-    sicknesses,
+    sicknesses
   };
   return extraData;
 }
@@ -62,7 +62,7 @@ function* parseModifiers<T extends MinionModificationInstance>(
   modifierInstanceType: string,
   templateParser: TemplateParser
 ): ParseIterator<T[]> {
-  const count: number = yield readInt32();
+  const count: number = yield new ReadInt32Instruction();
   const items = new Array(count);
   for (let i = 0; i < count; i++) {
     const modifier = yield* parseModifier<T>(
@@ -89,15 +89,15 @@ function* parseModifier<T extends MinionModificationInstance>(
   modifierInstanceType: string,
   templateParser: TemplateParser
 ): ParseIterator<T> {
-  const name: string = yield readKleiString();
+  const name: string = yield new ReadKleiStringInstruction();
   validateDotNetIdentifierName(name);
-  const dataLength: number = yield readInt32();
+  const dataLength: number = yield new ReadInt32Instruction();
 
-  const startPos: number = yield getReaderPosition();
+  const startPos: number = yield new GetReaderPosition();
   const value: any = yield* templateParser.parseByTemplate(
     modifierInstanceType
   );
-  const endPos: number = yield getReaderPosition();
+  const endPos: number = yield new GetReaderPosition();
 
   const dataRemaining = dataLength - (endPos - startPos);
   if (dataRemaining !== 0) {
@@ -110,7 +110,7 @@ function* parseModifier<T extends MinionModificationInstance>(
 
   const instance: MinionModificationInstance = {
     name,
-    value,
+    value
   };
 
   return instance as T;
