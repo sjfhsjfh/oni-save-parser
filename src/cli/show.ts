@@ -5,7 +5,7 @@ import { loadFile } from "./lib";
 export function mount(y: yargs.Argv) {
   return y.command(
     "show <file> <path> [options]",
-    "Legacy test",
+    "show value",
     yargs => {
       yargs
         .option("progress", {

@@ -8,10 +8,11 @@
 
 import yargs from "yargs";
 import { mount as mountTest } from "./test";
+import { mount as mountShow } from "./show";
 
 export type MountFunction = (y: yargs.Argv) => yargs.Argv;
 
-const commands: MountFunction[] = [mountTest];
+const commands: MountFunction[] = [mountTest, mountShow];
 const mount: MountFunction = (y: yargs.Argv) =>
   commands.reduce((y, c) => c(y), y);
 
