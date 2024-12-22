@@ -23,6 +23,7 @@ import {
 import { ParseInterceptor } from "../parser";
 import { VersionStrictness } from "../save-structure/version";
 import yargs from "yargs";
+import { loadFile, saveFile } from "./lib";
 
 export function mount(y: yargs.Argv) {
   return y.command(
@@ -63,7 +64,13 @@ function test(argv: yargs.ArgumentsCamelCase) {
 
   const currentTagPath: string[] = [];
   console.log("Loading save");
-  const saveData = loadFile(fileName);
+  const saveData = loadFile(
+    fileName,
+    currentTagPath,
+    showProgress,
+    showTags,
+    versionStrictness
+  );
 
   const modifiers = getBehavior(
     saveData.gameObjects.find(x => x.name === "Minion")!.gameObjects[0],
@@ -73,10 +80,16 @@ function test(argv: yargs.ArgumentsCamelCase) {
 
   console.log("re-saving");
   const writebackName = `${fileName}-writeback`;
-  saveFile(writebackName, saveData);
+  saveFile(writebackName, saveData, currentTagPath, showProgress, showTags);
 
   console.log("reloading");
-  const writebackData = loadFile(writebackName);
+  const writebackData = loadFile(
+    writebackName,
+    currentTagPath,
+    showProgress,
+    showTags,
+    versionStrictness
+  );
 
   console.log("diffing");
   const writebackDiff = checkDiff(saveData, writebackData);
@@ -111,77 +124,5 @@ function test(argv: yargs.ArgumentsCamelCase) {
       }
     };
     return diff(original, modified);
-  }
-
-  function loadFile(fileName: string): SaveGame {
-    const fileData = readFileSync(`./test-data/${fileName}.sav`);
-
-    let interceptors: ParseInterceptor[] = [];
-
-    if (showProgress) {
-      interceptors.push(progressReporter(console.log.bind(console, "LOADING")));
-    }
-    if (showTags) {
-      interceptors.push(
-        tagReporter(
-          console.log.bind(console, "LOAD-TAG-START"),
-          console.log.bind(console, "LOAD-TAG-END")
-        )
-      );
-    }
-
-    const interceptor = (compose as any)((x: any) => x, ...interceptors);
-
-    try {
-      return parseSaveGame(fileData.buffer, {
-        interceptor,
-        versionStrictness
-      });
-    } catch (e) {
-      console.error(`Load error at ${currentTagPath.join(" => ")}`);
-      e.tagPath = [...currentTagPath];
-      throw e;
-    }
-  }
-
-  function saveFile(fileName: string, save: SaveGame) {
-    let interceptors: ParseInterceptor[] = [];
-
-    if (showProgress) {
-      interceptors.push(progressReporter(console.log.bind(console, "SAVING")));
-    }
-
-    interceptors.push(tagReporter(onTagStart, onTagEnd));
-
-    // const interceptor = compose((x: any) => x, ...interceptors);
-    const interceptor = interceptors.reduce((a, b) => ((x: any) => b(a(x))), (x: any) => x);
-
-    try {
-      const fileData = writeSaveGame(save, interceptor);
-      writeFileSync(`./test-data/${fileName}.sav`, new Uint8Array(fileData));
-    } catch (e) {
-      console.error(`Save error at ${currentTagPath.join(" => ")}`);
-      e.tagPath = [...currentTagPath];
-      throw e;
-    }
-  }
-
-  function onTagStart(tagName: string, instanceName: string | null) {
-    if (showTags) {
-      console.log("TAG_START", tagName, instanceName);
-    }
-    const part = instanceName ? `${tagName}::${instanceName}` : tagName;
-    currentTagPath.push(part);
-  }
-  function onTagEnd(tagName: string, instanceName: string | null) {
-    if (showTags) {
-      console.log("TAG_END", tagName, instanceName);
-    }
-
-    const part = instanceName ? `${tagName}::${instanceName}` : tagName;
-    if (currentTagPath[currentTagPath.length - 1] !== part) {
-      debugger;
-    }
-    currentTagPath.pop();
   }
 }

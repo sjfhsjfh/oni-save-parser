@@ -1,7 +1,4 @@
-import minimist from "minimist";
-export type cliArgs = {
-    saveFile: string;
-    showProgress: boolean;
-    showTags: boolean;
-};
-export declare function parseTestArgs(rawArgs: minimist.ParsedArgs): cliArgs;
+import { SaveGame } from "../save-structure";
+import { VersionStrictness } from "../save-structure/version";
+export declare function loadFile(fileName: string, currentTagPath: string[], showProgress?: boolean, showTags?: boolean, versionStrictness?: VersionStrictness): SaveGame;
+export declare function saveFile(fileName: string, save: SaveGame, currentTagPath: string[], showProgress: boolean, showTags: boolean): void;
