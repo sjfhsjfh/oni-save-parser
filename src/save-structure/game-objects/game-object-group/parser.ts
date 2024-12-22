@@ -2,14 +2,14 @@ import { validateDotNetIdentifierName } from "../../../utils";
 
 import {
   ParseIterator,
-  readKleiString,
-  readInt32,
-  getReaderPosition,
   UnparseIterator,
   writeKleiString,
   writeInt32,
   writeDataLengthBegin,
-  writeDataLengthEnd
+  writeDataLengthEnd,
+  ReadKleiStringInstruction,
+  ReadInt32Instruction,
+  GetReaderPosition
 } from "../../../parser";
 
 import taggedParser from "../../../tagger/parse-tagger";
@@ -28,7 +28,7 @@ import { GameObjectGroup } from "./game-object-group";
 export function* parseGameObjectGroup(
   templateParser: TemplateParser
 ): ParseIterator<GameObjectGroup> {
-  const prefabName = yield readKleiString();
+  const prefabName = yield new ReadKleiStringInstruction();
   validateDotNetIdentifierName(prefabName);
 
   return yield* parseNamedGameObjectGroup(prefabName, templateParser);
@@ -41,9 +41,9 @@ const parseNamedGameObjectGroup = taggedParser(
     prefabName: string,
     templateParser: TemplateParser
   ): ParseIterator<GameObjectGroup> {
-    const instanceCount = yield readInt32();
-    const dataLength = yield readInt32();
-    const preParsePosition = yield getReaderPosition();
+    const instanceCount = yield new ReadInt32Instruction();
+    const dataLength = yield new ReadInt32Instruction();
+    const preParsePosition = yield new GetReaderPosition();
 
     const gameObjects: GameObject[] = new Array(instanceCount);
     for (let i = 0; i < instanceCount; i++) {
@@ -51,7 +51,7 @@ const parseNamedGameObjectGroup = taggedParser(
       gameObjects[i] = yield* parseGameObject(templateParser);
     }
 
-    const postParsePosition = yield getReaderPosition();
+    const postParsePosition = yield new GetReaderPosition();
     const bytesRemaining = dataLength - (postParsePosition - preParsePosition);
     if (bytesRemaining < 0) {
       throw new Error(

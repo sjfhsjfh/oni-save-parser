@@ -1,10 +1,10 @@
 import {
+  GetReaderPosition,
   ParseIterator,
+  ReadBytesInstruction,
+  ReadInt32Instruction,
+  ReadKleiStringInstruction,
   UnparseIterator,
-  getReaderPosition,
-  readBytes,
-  readInt32,
-  readKleiString,
   writeBytes,
   writeDataLengthBegin,
   writeDataLengthEnd,
@@ -63,7 +63,7 @@ const EXTRA_DATA_PARSERS: Record<string, ExtraDataParser> = {
 export function* parseGameObjectBehavior(
   templateParser: TemplateParser
 ): ParseIterator<GameObjectBehavior> {
-  const name = yield readKleiString();
+  const name = yield new ReadKleiStringInstruction();
   validateDotNetIdentifierName(name);
 
   return yield* parseNamedGameObjectBehavior(name, templateParser);
@@ -79,9 +79,9 @@ const parseNamedGameObjectBehavior = taggedParser(
     let extraData: any | undefined;
     let extraRaw: ArrayBuffer | undefined;
 
-    const dataLength = yield readInt32();
+    const dataLength = yield new ReadInt32Instruction();
 
-    const preParsePosition = yield getReaderPosition();
+    const preParsePosition = yield new GetReaderPosition();
     const templateData = yield* templateParser.parseByTemplate(name);
 
     const extraDataParser = EXTRA_DATA_PARSERS[name];
@@ -89,7 +89,7 @@ const parseNamedGameObjectBehavior = taggedParser(
       extraData = yield* extraDataParser.parse(templateParser);
     }
 
-    const postParsePosition = yield getReaderPosition();
+    const postParsePosition = yield new GetReaderPosition();
 
     const dataRemaining = dataLength - (postParsePosition - preParsePosition);
     if (dataRemaining < 0) {
@@ -106,7 +106,7 @@ const parseNamedGameObjectBehavior = taggedParser(
 
       // No extraData parser, so this is probably extraData that we do not know how to handle.
       //  Store it so that it can be saved again.
-      extraRaw = yield readBytes(dataRemaining);
+      extraRaw = yield new ReadBytesInstruction(dataRemaining);
     }
 
     const behavior: GameObjectBehavior = {

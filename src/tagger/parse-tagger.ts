@@ -1,6 +1,8 @@
 import { ParseIterator, UnparseIterator } from "../parser";
 
-import { taggedParseStart, taggedParseEnd } from "./instructions";
+import {
+  TaggedParseInstruction
+} from "./instructions";
 
 export interface ParseFunctionOne<T1, R> {
   (arg1: T1): ParseIterator<R>;
@@ -105,9 +107,9 @@ export default function taggedParser<R>(
       instanceName && typeof instanceName === "function"
         ? instanceName(...args)
         : instanceName;
-    yield taggedParseStart(resolvedTag, resolvedInstance);
+    yield TaggedParseInstruction.start(resolvedTag, resolvedInstance);
     const result = yield* parser(...args);
-    yield taggedParseEnd(resolvedTag, resolvedInstance);
+    yield TaggedParseInstruction.end(resolvedTag, resolvedInstance);
     return result;
   };
 }

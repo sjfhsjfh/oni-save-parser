@@ -2,19 +2,6 @@ import {
   ParseIterator,
   UnparseIterator,
   DataLengthToken,
-  readInt32,
-  readBytes,
-  readByte,
-  readDouble,
-  readInt16,
-  readInt64,
-  readSByte,
-  readSingle,
-  readKleiString,
-  readUInt16,
-  readUInt32,
-  readUInt64,
-  getReaderPosition,
   writeInt32,
   writeBytes,
   writeByte,
@@ -29,7 +16,20 @@ import {
   writeUInt64,
   writeDataLengthBegin,
   getWriterPosition,
-  writeDataLengthEnd
+  writeDataLengthEnd,
+  ReadByteInstruction,
+  ReadSByteInstruction,
+  ReadInt32Instruction,
+  ReadBytesInstruction,
+  ReadDoubleInstruction,
+  ReadInt16Instruction,
+  ReadInt64Instruction,
+  ReadSingleInstruction,
+  ReadKleiStringInstruction,
+  ReadUInt16Instruction,
+  ReadUInt32Instruction,
+  ReadUInt64Instruction,
+  GetReaderPosition
 } from "../../parser";
 import {
   TypeTemplates,
@@ -56,16 +56,16 @@ function* parseArrayLike(info: TypeInfo, templates: TypeTemplates) {
   //  Note that if length is -1, this is 4 (the length of the count).
   //  If length is >= 0, this is the length of the element
   //  portion, NOT INCLUDING the count.
-  yield readInt32();
+  yield new ReadInt32Instruction();
 
   // element-length
-  const length = yield readInt32();
+  const length = yield new ReadInt32Instruction();
   if (length === -1) {
     return null;
   } else if (length >= 0) {
     const typeCode = getTypeCode(elementType.info);
     if (typeCode === SerializationTypeCode.Byte) {
-      const data = yield readBytes(length);
+      const data = yield new ReadBytesInstruction(length);
       return new Uint8Array(data);
     } else if (isValueType(elementType.info)) {
       if (typeCode !== SerializationTypeCode.UserDefined) {
@@ -147,7 +147,7 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.Boolean]: {
     parse: function*() {
-      const b = yield readByte();
+      const b = yield new ReadByteInstruction();
       return Boolean(b);
     },
     unparse: function*(value) {
@@ -156,7 +156,7 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.Byte]: {
     parse: function*() {
-      return yield readByte();
+      return yield new ReadByteInstruction();
     },
     unparse: function*(value) {
       yield writeByte(value);
@@ -164,10 +164,10 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.Colour]: {
     parse: function*() {
-      const rb = yield readByte();
-      const gb = yield readByte();
-      const bb = yield readByte();
-      const ab = yield readByte();
+      const rb = yield new ReadByteInstruction();
+      const gb = yield new ReadByteInstruction();
+      const bb = yield new ReadByteInstruction();
+      const ab = yield new ReadByteInstruction();
       return {
         r: rb / 255,
         g: gb / 255,
@@ -187,10 +187,10 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
       const [keyType, valueType] = info.subTypes!;
 
       // data-length.  4 if null.
-      yield readInt32();
+      yield new ReadInt32Instruction();
 
       // element-count.  -1 if null.
-      const count = yield readInt32();
+      const count = yield new ReadInt32Instruction();
       if (count >= 0) {
         let pairs: [any, any][] = new Array(count);
 
@@ -241,7 +241,7 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.Double]: {
     parse: function*() {
-      return yield readDouble();
+      return yield new ReadDoubleInstruction();
     },
     unparse: function*(value) {
       yield writeDouble(value);
@@ -249,7 +249,7 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.Enumeration]: {
     parse: function*() {
-      return yield readInt32();
+      return yield new ReadInt32Instruction();
     },
     unparse: function*(value) {
       yield writeInt32(value);
@@ -261,7 +261,7 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.Int16]: {
     parse: function*() {
-      return yield readInt16();
+      return yield new ReadInt16Instruction();
     },
     unparse: function*(value) {
       yield writeInt16(value);
@@ -269,7 +269,7 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.Int32]: {
     parse: function*() {
-      return yield readInt32();
+      return yield new ReadInt32Instruction();
     },
     unparse: function*(value) {
       yield writeInt32(value);
@@ -277,7 +277,7 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.Int64]: {
     parse: function*() {
-      return yield readInt64();
+      return yield new ReadInt64Instruction();
     },
     unparse: function*(value) {
       yield writeInt64(value);
@@ -297,7 +297,7 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
     // We reproduce the faulty behavior here to remain accurate to ONI.
     parse: function*(info, templates) {
       // Writer mirrors ONI code and writes unparsable data.  See ONI bug description above.
-      const dataLength = yield readInt32();
+      const dataLength = yield new ReadInt32Instruction();
       if (dataLength >= 0) {
         // Trying to parse a data length of 0 makes no sense,
         //  but we are following ONI code.  Do not change this logic.
@@ -338,7 +338,7 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.SByte]: {
     parse: function*() {
-      return yield readSByte();
+      return yield new ReadSByteInstruction();
     },
     unparse: function*(value) {
       yield writeSByte(value);
@@ -346,7 +346,7 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.Single]: {
     parse: function*() {
-      return yield readSingle();
+      return yield new ReadSingleInstruction();
     },
     unparse: function*(value) {
       yield writeSingle(value);
@@ -354,7 +354,7 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.String]: {
     parse: function*() {
-      return yield readKleiString();
+      return yield new ReadKleiStringInstruction();
     },
     unparse: function*(value) {
       yield writeKleiString(value);
@@ -362,7 +362,7 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.UInt16]: {
     parse: function*() {
-      return yield readUInt16();
+      return yield new ReadUInt16Instruction();
     },
     unparse: function*(value) {
       yield writeUInt16(value);
@@ -370,7 +370,7 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.UInt32]: {
     parse: function*() {
-      return yield readUInt32();
+      return yield new ReadUInt32Instruction();
     },
     unparse: function*(value) {
       yield writeUInt32(value);
@@ -378,7 +378,7 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.UInt64]: {
     parse: function*() {
-      return yield readUInt64();
+      return yield new ReadUInt64Instruction();
     },
     unparse: function*(value) {
       yield writeUInt64(value);
@@ -388,14 +388,14 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
     parse: function*(info, templates) {
       const templateName = info.templateName!;
 
-      const dataLength = yield readInt32();
+      const dataLength = yield new ReadInt32Instruction();
       if (dataLength < 0) {
         return null;
       }
 
-      const parseStart = yield getReaderPosition();
+      const parseStart = yield new GetReaderPosition();
       const obj = yield* parseByTemplate(templates, templateName);
-      const parseEnd = yield getReaderPosition();
+      const parseEnd = yield new GetReaderPosition();
 
       const parseLength = parseEnd - parseStart;
       if (parseLength !== dataLength) {
@@ -421,8 +421,8 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.Vector2]: {
     parse: function*() {
-      const x = yield readSingle();
-      const y = yield readSingle();
+      const x = yield new ReadSingleInstruction();
+      const y = yield new ReadSingleInstruction();
       return {
         x,
         y
@@ -435,8 +435,8 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.Vector2I]: {
     parse: function*() {
-      const x = yield readInt32();
-      const y = yield readInt32();
+      const x = yield new ReadInt32Instruction();
+      const y = yield new ReadInt32Instruction();
       return {
         x,
         y
@@ -449,9 +449,9 @@ const typeParsers: Record<SerializationTypeCode, TypeParser> = {
   },
   [SerializationTypeCode.Vector3]: {
     parse: function*() {
-      const x = yield readSingle();
-      const y = yield readSingle();
-      const z = yield readSingle();
+      const x = yield new ReadSingleInstruction();
+      const y = yield new ReadSingleInstruction();
+      const z = yield new ReadSingleInstruction();
       return {
         x,
         y,

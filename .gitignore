@@ -1,4 +1,12 @@
+# Node
 node_modules/
+
+# VSCode
 .vscode/launch.json
+
+# Project
 test-data/
 /lib/tsconfig.tsbuildinfo
+
+# Mac OS
+.DS_Store

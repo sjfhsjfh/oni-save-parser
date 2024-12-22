@@ -2,10 +2,10 @@ import { validateDotNetIdentifierName } from "../../../../../utils";
 
 import {
   ParseIterator,
-  readInt32,
+  ReadInt32Instruction,
+  ReadKleiStringInstruction,
   UnparseIterator,
   writeInt32,
-  readKleiString,
   writeKleiString
 } from "../../../../../parser";
 
@@ -24,10 +24,10 @@ import { StoredGameObject } from "./storage";
 export function* parseStorageExtraData(
   templateParser: TemplateParser
 ): ParseIterator<StoredGameObject[]> {
-  const itemCount: number = yield readInt32();
+  const itemCount: number = yield new ReadInt32Instruction();
   const items = new Array(itemCount);
   for (let i = 0; i < itemCount; i++) {
-    const name = yield readKleiString();
+    const name = yield new ReadKleiStringInstruction();
     validateDotNetIdentifierName(name);
     const gameObject = yield* parseGameObject(templateParser);
     items[i] = {

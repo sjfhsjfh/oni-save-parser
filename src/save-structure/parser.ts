@@ -1,16 +1,16 @@
 import {
   ParseIterator,
   UnparseIterator,
-  readKleiString,
-  readChars,
-  readInt32,
-  readCompressed,
   writeCompressed,
   writeKleiString,
   writeChars,
   writeInt32,
-  readBytes,
-  writeBytes
+  writeBytes,
+  ReadKleiStringInstruction,
+  ReadInt32Instruction,
+  ReadBytesInstruction,
+  ReadCharsInstruction,
+  ReadCompressedInstruction
 } from "../parser";
 
 import { ParseContext, WriteContext } from "./parse-context";
@@ -40,7 +40,7 @@ import { parseGameObjects, unparseGameObjects } from "./game-objects/parser";
 import { SaveGameData } from "./game-data";
 import { parseGameData, writeGameData } from "./game-data/parser";
 import { SaveGame } from "./save-game";
-import { validateVersion } from "./version-validator";
+import { CURRENT_VERSION, Version } from "./version";
 
 const SAVE_HEADER = "KSAV";
 
@@ -74,7 +74,10 @@ export function* parseSaveGame(
   const { saveMajorVersion, saveMinorVersion } = header.gameInfo;
   const versionStrictness = options.versionStrictness || "minor";
   if (versionStrictness !== "none") {
-    validateVersion(saveMajorVersion, saveMinorVersion, versionStrictness);
+    CURRENT_VERSION.validate(
+      new Version(saveMajorVersion, saveMinorVersion),
+      versionStrictness
+    );
   }
 
   const templates: TypeTemplates = yield* parseTemplates();
@@ -84,7 +87,7 @@ export function* parseSaveGame(
   let body: SaveGameBody;
 
   if (header.isCompressed) {
-    body = yield readCompressed(parseSaveBody(context));
+    body = yield new ReadCompressedInstruction(parseSaveBody(context));
   } else {
     body = yield* parseSaveBody(context);
   }
@@ -98,7 +101,7 @@ export function* parseSaveGame(
 }
 
 function* parseSaveBody(context: ParseContext): ParseIterator<SaveGameBody> {
-  const worldMarker = yield readKleiString();
+  const worldMarker = yield new ReadKleiStringInstruction();
   if (worldMarker !== "world") {
     throw new Error(`Expected "world" string.`);
   }
@@ -106,10 +109,10 @@ function* parseSaveBody(context: ParseContext): ParseIterator<SaveGameBody> {
   const world: SaveGameWorld = yield* parseWorld(context);
   const settings: SaveGameSettings = yield* parseSettings(context);
 
-  const simDataLength: number = yield readInt32();
-  const simData: ArrayBuffer = yield readBytes(simDataLength);
+  const simDataLength: number = yield new ReadInt32Instruction();
+  const simData: ArrayBuffer = yield new ReadBytesInstruction(simDataLength);
 
-  const ksav: string = yield readChars(SAVE_HEADER.length);
+  const ksav: string = yield new ReadCharsInstruction(SAVE_HEADER.length);
   if (ksav !== SAVE_HEADER) {
     throw new Error(
       `Failed to parse ksav header: Expected "${SAVE_HEADER}" but got "${ksav}" (${Array.from(
@@ -117,8 +120,8 @@ function* parseSaveBody(context: ParseContext): ParseIterator<SaveGameBody> {
       ).map(x => x.charCodeAt(0))})`
     );
   }
-  const versionMajor: number = yield readInt32();
-  const versionMinor: number = yield readInt32();
+  const versionMajor: number = yield new ReadInt32Instruction();
+  const versionMinor: number = yield new ReadInt32Instruction();
 
   // The header contains this same data and validates it.
   // validateVersion(versionMajor, versionMinor);

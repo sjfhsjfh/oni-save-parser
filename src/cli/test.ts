@@ -21,7 +21,7 @@ import {
   getBehavior
 } from "../save-structure";
 import { ParseInterceptor } from "../parser";
-import { VersionStrictness } from "../save-structure/version-validator";
+import { VersionStrictness } from "../save-structure/version";
 import yargs from "yargs";
 
 export function mount(y: yargs.Argv) {
@@ -153,7 +153,8 @@ function test(argv: yargs.ArgumentsCamelCase) {
 
     interceptors.push(tagReporter(onTagStart, onTagEnd));
 
-    const interceptor = (compose as any)((x: any) => x, ...interceptors);
+    // const interceptor = compose((x: any) => x, ...interceptors);
+    const interceptor = interceptors.reduce((a, b) => ((x: any) => b(a(x))), (x: any) => x);
 
     try {
       const fileData = writeSaveGame(save, interceptor);

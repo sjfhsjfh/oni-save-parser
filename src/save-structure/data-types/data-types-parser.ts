@@ -1,18 +1,18 @@
 import {
   ParseIterator,
   UnparseIterator,
-  readSingle,
   writeSingle,
-  readInt32,
-  writeInt32
+  writeInt32,
+  ReadSingleInstruction,
+  ReadInt32Instruction
 } from "../../parser";
 
 import { Vector2, Vector2I, Vector3, Quaternion } from "./data-types";
 
 export function* parseVector2(): ParseIterator<Vector2> {
   return {
-    x: yield readSingle(),
-    y: yield readSingle()
+    x: yield new ReadSingleInstruction(),
+    y: yield new ReadSingleInstruction()
   };
 }
 export function* unparseVector2(value: Vector2): UnparseIterator {
@@ -22,8 +22,8 @@ export function* unparseVector2(value: Vector2): UnparseIterator {
 
 export function* parseVector2I(): ParseIterator<Vector2I> {
   return {
-    x: yield readInt32(),
-    y: yield readInt32()
+    x: yield new ReadInt32Instruction(),
+    y: yield new ReadInt32Instruction()
   };
 }
 export function* unparseVector2I(value: Vector2I): UnparseIterator {
@@ -33,9 +33,9 @@ export function* unparseVector2I(value: Vector2I): UnparseIterator {
 
 export function* parseVector3(): ParseIterator<Vector3> {
   return {
-    x: yield readSingle(),
-    y: yield readSingle(),
-    z: yield readSingle()
+    x: yield new ReadSingleInstruction(),
+    y: yield new ReadSingleInstruction(),
+    z: yield new ReadSingleInstruction()
   };
 }
 export function* unparseVector3(value: Vector3): UnparseIterator {
@@ -46,10 +46,10 @@ export function* unparseVector3(value: Vector3): UnparseIterator {
 
 export function* parseQuaternion(): ParseIterator<Quaternion> {
   return {
-    x: yield readSingle(),
-    y: yield readSingle(),
-    z: yield readSingle(),
-    w: yield readSingle()
+    x: yield new ReadSingleInstruction(),
+    y: yield new ReadSingleInstruction(),
+    z: yield new ReadSingleInstruction(),
+    w: yield new ReadSingleInstruction()
   };
 }
 export function* unparseQuaternion(value: Quaternion): UnparseIterator {

@@ -1,7 +1,7 @@
 import {
   ParseIterator,
+  ReadKleiStringInstruction,
   UnparseIterator,
-  readKleiString,
   writeKleiString
 } from "../../parser";
 
@@ -19,7 +19,7 @@ const AssemblyTypeName = "Game+GameSaveData";
 export function* parseGameData({
   parseByTemplate
 }: TemplateParser): ParseIterator<SaveGameData> {
-  const typeName = yield readKleiString();
+  const typeName = yield new ReadKleiStringInstruction();
   validateDotNetIdentifierName(typeName);
   if (typeName !== AssemblyTypeName) {
     throw new Error(

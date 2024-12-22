@@ -1,10 +1,8 @@
-import { isObject } from "util";
-
-export interface ParserInstruction {
-  type: string;
-  isMeta?: boolean;
+export abstract class ParserInstruction {
+  abstract type: string;
+  abstract isMeta: boolean;
 }
 
 export function isMetaInstruction(inst: ParserInstruction): boolean {
-  return isObject(inst) && !!inst.isMeta;
+  return inst !== null && typeof inst === "object" && !!inst.isMeta;
 }
